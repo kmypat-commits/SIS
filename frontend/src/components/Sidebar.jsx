@@ -5,6 +5,7 @@ const links = [
   { to: '/cde',        icon: '📐', label: 'Элементы CDE' },
   { to: '/knowledge',  icon: '🗄️', label: 'База знаний' },
   { to: '/optimize',   icon: '🚀', label: 'Оптимизация' },
+  { to: '/guide',      icon: '📘', label: 'Руководство' },
 ];
 
 export default function Sidebar() {

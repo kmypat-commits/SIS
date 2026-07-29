@@ -4,6 +4,7 @@ import ProjectPage from './pages/ProjectPage';
 import CDEPage from './pages/CDEPage';
 import KnowledgePage from './pages/KnowledgePage';
 import OptimizePage from './pages/OptimizePage';
+import GuidePage from './pages/GuidePage';
 import './index.css';
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
             <Route path="/cde"       element={<CDEPage />} />
             <Route path="/knowledge" element={<KnowledgePage />} />
             <Route path="/optimize"  element={<OptimizePage />} />
+            <Route path="/guide"    element={<GuidePage />} />
           </Routes>
         </main>
       </div>
