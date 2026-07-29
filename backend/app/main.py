@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -38,11 +39,7 @@ app.include_router(optimize.router)
 app.include_router(report.router)
 
 
-@app.get("/")
-def root():
-    return {
-        "system": "MachOpt-6L",
-        "version": "1.0.0",
-        "description": "Система параметрической и структурной оптимизации ТП механической обработки",
-        "docs": "/docs",
-    }
+frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+if frontend_dir.is_dir():
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
