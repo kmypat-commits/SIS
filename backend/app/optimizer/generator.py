@@ -265,9 +265,10 @@ def _build_transition_combos(
                 continue
 
             cd = tool.get("cutting_data", {})
-            V_range = cd.get("V_m_min", {"min": 50, "max": 100})
-            f_range = cd.get("f_mm_rev", {"min": 0.05, "max": 0.2})
-            ap_range = cd.get("ap_mm", {"min": 0.5, "max": 2.0})
+            material_cd = cd.get(material_group, cd) if isinstance(cd, dict) else cd
+            V_range = material_cd.get("V_m_min", {"min": 50, "max": 100})
+            f_range = material_cd.get("f_mm_rev", {"min": 0.05, "max": 0.2})
+            ap_range = material_cd.get("ap_mm", {"min": 0.5, "max": 2.0})
 
             Vs = _sample_range(V_range["min"], V_range["max"], CUTTING_LEVELS)
             fs = _sample_range(f_range["min"], f_range["max"], CUTTING_LEVELS)

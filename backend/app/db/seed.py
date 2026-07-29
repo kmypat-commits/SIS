@@ -23,26 +23,27 @@ def seed_if_empty(db: Session) -> None:
     with open(SEED_FILE, encoding="utf-8") as f:
         data = json.load(f)
 
-    # Project
-    proj = data["project"]
-    mat = proj.get("material", {})
-    project_orm = ProjectORM(
-        project_id=proj["project_id"],
-        name=proj["name"],
-        currency=proj.get("currency", "KZT"),
-        production_type=proj.get("production_type", "serial"),
-        batch_size=proj.get("batch_size", 1),
-        material_name=mat.get("name", ""),
-        material_group=mat.get("group", "steel"),
-        hardness_hb=mat.get("hardness_hb", 0),
-        product_json=data.get("product"),
-        strategy_json=data.get("strategy"),
-        resources_json=data.get("resources"),
-        process_templates_json=data.get("process_templates"),
-        costs_json=data.get("costs"),
-        quality_models_json=data.get("quality_models"),
-    )
-    db.add(project_orm)
+    # Projects (now an array)
+    for entry in data.get("projects", [data]):
+        proj = entry.get("project", entry)
+        mat = proj.get("material", {})
+        project_orm = ProjectORM(
+            project_id=proj["project_id"],
+            name=proj["name"],
+            currency=proj.get("currency", "KZT"),
+            production_type=proj.get("production_type", "serial"),
+            batch_size=proj.get("batch_size", 1),
+            material_name=mat.get("name", ""),
+            material_group=mat.get("group", "steel"),
+            hardness_hb=mat.get("hardness_hb", 0),
+            product_json=entry.get("product"),
+            strategy_json=data.get("strategy"),
+            resources_json=data.get("resources"),
+            process_templates_json=entry.get("process_templates"),
+            costs_json=data.get("costs"),
+            quality_models_json=data.get("quality_models"),
+        )
+        db.add(project_orm)
 
     # Machines
     for m in data.get("resources", {}).get("machines", []):
