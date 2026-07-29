@@ -1,0 +1,412 @@
+{
+  "project": {
+    "project_id": "machopt_mvp_0001",
+    "name": "Корпус - MVP",
+    "currency": "KZT",
+    "unit_system": "metric",
+    "production_type": "serial",
+    "batch_size": 200,
+    "material": {
+      "name": "Steel 45",
+      "group": "steel",
+      "hardness_hb": 200
+    }
+  },
+  "strategy": {
+    "optimization_mode": "pareto",
+    "objectives": [
+      { "id": "time_total_min", "type": "minimize" },
+      { "id": "cost_total_min", "type": "minimize" },
+      { "id": "setup_error_min", "type": "minimize" },
+      { "id": "quality_risk_min", "type": "minimize" }
+    ],
+    "constraints": {
+      "max_operations": 8,
+      "allowed_machines": ["VMC_3AX_01", "VMC_3AX_02", "DRILL_TAP_01"],
+      "require_coolant": true
+    },
+    "solver": {
+      "method": "nsga2",
+      "seed": 42,
+      "population_size": 80,
+      "generations": 60
+    }
+  },
+  "product": {
+    "product_id": "part_001",
+    "name": "Корпус",
+    "blank": {
+      "type": "rectangular_block",
+      "dimensions_mm": { "x": 160.0, "y": 110.0, "z": 55.0 },
+      "stock_allowance_mm": { "x": 2.0, "y": 2.0, "z": 2.0 }
+    },
+    "cde_list": [
+      {
+        "cde_id": "CDE_PLN_A",
+        "type": "plane",
+        "name": "База A (нижняя плоскость)",
+        "geometry": { "area_mm2": 17600.0 },
+        "requirements": {
+          "dim_tolerance_mm": 0.05,
+          "flatness_mm": 0.03,
+          "roughness_ra_um": 1.6
+        },
+        "allowed_methods": ["face_milling_rough", "face_milling_finish"]
+      },
+      {
+        "cde_id": "CDE_PLN_B",
+        "type": "plane",
+        "name": "Плоскость B (верхняя плоскость)",
+        "geometry": { "area_mm2": 17600.0 },
+        "requirements": {
+          "dim_tolerance_mm": 0.08,
+          "flatness_mm": 0.05,
+          "roughness_ra_um": 3.2
+        },
+        "allowed_methods": ["face_milling_rough", "face_milling_finish"]
+      },
+      {
+        "cde_id": "CDE_POCKET_01",
+        "type": "pocket",
+        "name": "Карман прямоугольный",
+        "geometry": {
+          "length_mm": 90.0,
+          "width_mm": 60.0,
+          "depth_mm": 18.0,
+          "corner_radius_mm": 4.0
+        },
+        "requirements": {
+          "dim_tolerance_mm": 0.10,
+          "roughness_ra_um": 3.2
+        },
+        "allowed_methods": ["pocket_rough", "pocket_finish"]
+      },
+      {
+        "cde_id": "CDE_HOLE_GRP_01",
+        "type": "hole_group",
+        "name": "Группа отверстий под крепеж",
+        "geometry": {
+          "holes": [
+            { "hole_id": "H1", "diameter_mm": 8.5, "depth_mm": 22.0, "x_mm": 20.0, "y_mm": 20.0 },
+            { "hole_id": "H2", "diameter_mm": 8.5, "depth_mm": 22.0, "x_mm": 140.0, "y_mm": 20.0 },
+            { "hole_id": "H3", "diameter_mm": 8.5, "depth_mm": 22.0, "x_mm": 20.0, "y_mm": 90.0 },
+            { "hole_id": "H4", "diameter_mm": 8.5, "depth_mm": 22.0, "x_mm": 140.0, "y_mm": 90.0 }
+          ]
+        },
+        "requirements": {
+          "positional_tolerance_mm": 0.15,
+          "roughness_ra_um": 6.3
+        },
+        "allowed_methods": ["spot_drill", "drill", "ream_optional"]
+      },
+      {
+        "cde_id": "CDE_THREAD_01",
+        "type": "thread",
+        "name": "Резьбовое отверстие M10",
+        "geometry": { "diameter_mm": 10.0, "pitch_mm": 1.5, "depth_mm": 18.0, "x_mm": 80.0, "y_mm": 55.0 },
+        "requirements": {
+          "thread_class": "6H",
+          "roughness_ra_um": 6.3
+        },
+        "allowed_methods": ["drill_core", "tap"]
+      },
+      {
+        "cde_id": "CDE_CHAMFER_01",
+        "type": "chamfer",
+        "name": "Фаски по кромкам",
+        "geometry": { "chamfer_mm": 1.0, "edges_count": 8 },
+        "requirements": { "roughness_ra_um": 6.3 },
+        "allowed_methods": ["chamfer_milling"]
+      }
+    ]
+  },
+  "resources": {
+    "machines": [
+      {
+        "machine_id": "VMC_3AX_01",
+        "type": "milling_3axis",
+        "name": "VMC 3-axis A",
+        "capabilities": ["face_milling", "pocket_milling", "drilling", "tapping", "chamfer"],
+        "workspace_mm": { "x": 800, "y": 500, "z": 500 },
+        "accuracy": { "positioning_mm": 0.01, "repeatability_mm": 0.005 },
+        "cost": { "machine_minute_cost_kzt": 220 },
+        "coolant_supported": true
+      },
+      {
+        "machine_id": "VMC_3AX_02",
+        "type": "milling_3axis",
+        "name": "VMC 3-axis B",
+        "capabilities": ["face_milling", "pocket_milling", "drilling", "tapping", "chamfer"],
+        "workspace_mm": { "x": 600, "y": 400, "z": 450 },
+        "accuracy": { "positioning_mm": 0.015, "repeatability_mm": 0.008 },
+        "cost": { "machine_minute_cost_kzt": 180 },
+        "coolant_supported": true
+      },
+      {
+        "machine_id": "DRILL_TAP_01",
+        "type": "drill_tap_center",
+        "name": "Drill/Tap Center",
+        "capabilities": ["drilling", "tapping", "spot_drill"],
+        "workspace_mm": { "x": 500, "y": 300, "z": 300 },
+        "accuracy": { "positioning_mm": 0.02, "repeatability_mm": 0.01 },
+        "cost": { "machine_minute_cost_kzt": 120 },
+        "coolant_supported": true
+      }
+    ],
+    "fixtures": [
+      {
+        "fixture_id": "VISE_160",
+        "type": "vise",
+        "name": "Тиски 160",
+        "compatible_machines": ["VMC_3AX_01", "VMC_3AX_02", "DRILL_TAP_01"],
+        "setup_time_min": 6.0,
+        "setup_cost_kzt": 800,
+        "basing_options": ["3-2-1_standard"]
+      },
+      {
+        "fixture_id": "PLATE_T_SLOTS",
+        "type": "clamping_plate",
+        "name": "Плита с Т-пазами",
+        "compatible_machines": ["VMC_3AX_01", "VMC_3AX_02"],
+        "setup_time_min": 10.0,
+        "setup_cost_kzt": 1200,
+        "basing_options": ["3-2-1_standard", "pin_locators"]
+      }
+    ],
+    "setup_methods": [
+      {
+        "setup_method_id": "PROBE_WCS",
+        "name": "Привязка нуля щупом",
+        "time_min": 3.0,
+        "cost_kzt": 350,
+        "setup_error_mm": 0.02
+      },
+      {
+        "setup_method_id": "EDGE_FINDER_WCS",
+        "name": "Привязка нуля индикатором/искателем кромки",
+        "time_min": 6.0,
+        "cost_kzt": 250,
+        "setup_error_mm": 0.04
+      },
+      {
+        "setup_method_id": "MANUAL_MARKING",
+        "name": "Ручная разметка",
+        "time_min": 10.0,
+        "cost_kzt": 150,
+        "setup_error_mm": 0.08
+      }
+    ],
+    "tools": [
+      {
+        "tool_id": "T_FACE_063",
+        "type": "face_mill",
+        "name": "Фреза торцевая 63 мм",
+        "diameter_mm": 63.0,
+        "flutes": 6,
+        "coating": "TiAlN",
+        "tool_cost_kzt": 65000,
+        "tool_life_min": 240,
+        "compatible_material_groups": ["steel"],
+        "cutting_data": {
+          "V_m_min": { "min": 120, "max": 220 },
+          "f_mm_rev": { "min": 0.15, "max": 0.35 },
+          "ap_mm": { "min": 0.8, "max": 2.5 }
+        }
+      },
+      {
+        "tool_id": "T_END_012",
+        "type": "end_mill",
+        "name": "Фреза концевая 12 мм",
+        "diameter_mm": 12.0,
+        "flutes": 4,
+        "coating": "TiAlN",
+        "tool_cost_kzt": 18000,
+        "tool_life_min": 160,
+        "compatible_material_groups": ["steel"],
+        "cutting_data": {
+          "V_m_min": { "min": 90, "max": 160 },
+          "f_mm_rev": { "min": 0.08, "max": 0.22 },
+          "ap_mm": { "min": 0.5, "max": 2.0 }
+        }
+      },
+      {
+        "tool_id": "T_END_008",
+        "type": "end_mill",
+        "name": "Фреза концевая 8 мм",
+        "diameter_mm": 8.0,
+        "flutes": 4,
+        "coating": "TiAlN",
+        "tool_cost_kzt": 14000,
+        "tool_life_min": 140,
+        "compatible_material_groups": ["steel"],
+        "cutting_data": {
+          "V_m_min": { "min": 90, "max": 170 },
+          "f_mm_rev": { "min": 0.06, "max": 0.18 },
+          "ap_mm": { "min": 0.4, "max": 1.5 }
+        }
+      },
+      {
+        "tool_id": "T_DRILL_085",
+        "type": "drill",
+        "name": "Сверло 8.5 мм",
+        "diameter_mm": 8.5,
+        "tool_cost_kzt": 6500,
+        "tool_life_min": 90,
+        "compatible_material_groups": ["steel"],
+        "cutting_data": {
+          "V_m_min": { "min": 20, "max": 45 },
+          "f_mm_rev": { "min": 0.08, "max": 0.20 },
+          "ap_mm": { "min": 8.0, "max": 22.0 }
+        }
+      },
+      {
+        "tool_id": "T_SPOT_006",
+        "type": "spot_drill",
+        "name": "Центровочное сверло 6 мм",
+        "diameter_mm": 6.0,
+        "tool_cost_kzt": 5000,
+        "tool_life_min": 120,
+        "compatible_material_groups": ["steel"],
+        "cutting_data": {
+          "V_m_min": { "min": 20, "max": 60 },
+          "f_mm_rev": { "min": 0.03, "max": 0.10 },
+          "ap_mm": { "min": 1.0, "max": 2.5 }
+        }
+      },
+      {
+        "tool_id": "T_TAP_M10",
+        "type": "tap",
+        "name": "Метчик M10x1.5",
+        "diameter_mm": 10.0,
+        "tool_cost_kzt": 12000,
+        "tool_life_min": 60,
+        "compatible_material_groups": ["steel"],
+        "cutting_data": {
+          "V_m_min": { "min": 6, "max": 14 },
+          "f_mm_rev": { "min": 1.5, "max": 1.5 },
+          "ap_mm": { "min": 10.0, "max": 18.0 }
+        }
+      },
+      {
+        "tool_id": "T_CHMF_016",
+        "type": "chamfer_mill",
+        "name": "Фреза фасочная 16 мм 90deg",
+        "diameter_mm": 16.0,
+        "tool_cost_kzt": 9000,
+        "tool_life_min": 150,
+        "compatible_material_groups": ["steel"],
+        "cutting_data": {
+          "V_m_min": { "min": 70, "max": 140 },
+          "f_mm_rev": { "min": 0.05, "max": 0.16 },
+          "ap_mm": { "min": 0.2, "max": 1.0 }
+        }
+      }
+    ]
+  },
+  "process_templates": {
+    "operations_catalog": [
+      {
+        "operation_id": "OP10_FACE_A",
+        "name": "Торцевание плоскости A",
+        "applicable_cde": ["CDE_PLN_A"],
+        "candidate_machines": ["VMC_3AX_01", "VMC_3AX_02"],
+        "candidate_fixtures": ["VISE_160", "PLATE_T_SLOTS"],
+        "candidate_setup_methods": ["PROBE_WCS", "EDGE_FINDER_WCS"],
+        "transitions": [
+          { "transition_id": "TR10_ROUGH", "method": "face_milling_rough", "tool_candidates": ["T_FACE_063"], "quality_target": { "roughness_ra_um": 3.2 } },
+          { "transition_id": "TR10_FINISH", "method": "face_milling_finish", "tool_candidates": ["T_FACE_063"], "quality_target": { "roughness_ra_um": 1.6 } }
+        ]
+      },
+      {
+        "operation_id": "OP20_FACE_B",
+        "name": "Торцевание плоскости B",
+        "applicable_cde": ["CDE_PLN_B"],
+        "candidate_machines": ["VMC_3AX_01", "VMC_3AX_02"],
+        "candidate_fixtures": ["VISE_160", "PLATE_T_SLOTS"],
+        "candidate_setup_methods": ["PROBE_WCS", "EDGE_FINDER_WCS"],
+        "transitions": [
+          { "transition_id": "TR20_ROUGH", "method": "face_milling_rough", "tool_candidates": ["T_FACE_063"], "quality_target": { "roughness_ra_um": 6.3 } },
+          { "transition_id": "TR20_FINISH", "method": "face_milling_finish", "tool_candidates": ["T_FACE_063"], "quality_target": { "roughness_ra_um": 3.2 } }
+        ]
+      },
+      {
+        "operation_id": "OP30_POCKET",
+        "name": "Фрезерование кармана",
+        "applicable_cde": ["CDE_POCKET_01"],
+        "candidate_machines": ["VMC_3AX_01", "VMC_3AX_02"],
+        "candidate_fixtures": ["VISE_160", "PLATE_T_SLOTS"],
+        "candidate_setup_methods": ["PROBE_WCS"],
+        "transitions": [
+          { "transition_id": "TR30_ROUGH", "method": "pocket_rough", "tool_candidates": ["T_END_012"], "quality_target": { "roughness_ra_um": 6.3 } },
+          { "transition_id": "TR30_FINISH", "method": "pocket_finish", "tool_candidates": ["T_END_008"], "quality_target": { "roughness_ra_um": 3.2 } }
+        ]
+      },
+      {
+        "operation_id": "OP40_HOLES",
+        "name": "Сверление группы отверстий",
+        "applicable_cde": ["CDE_HOLE_GRP_01"],
+        "candidate_machines": ["DRILL_TAP_01", "VMC_3AX_01", "VMC_3AX_02"],
+        "candidate_fixtures": ["VISE_160"],
+        "candidate_setup_methods": ["PROBE_WCS", "EDGE_FINDER_WCS"],
+        "transitions": [
+          { "transition_id": "TR40_SPOT", "method": "spot_drill", "tool_candidates": ["T_SPOT_006"], "quality_target": { "roughness_ra_um": 12.5 } },
+          { "transition_id": "TR40_DRILL", "method": "drill", "tool_candidates": ["T_DRILL_085"], "quality_target": { "roughness_ra_um": 6.3 } }
+        ]
+      },
+      {
+        "operation_id": "OP50_THREAD",
+        "name": "Сверление и нарезание резьбы M10",
+        "applicable_cde": ["CDE_THREAD_01"],
+        "candidate_machines": ["DRILL_TAP_01", "VMC_3AX_01"],
+        "candidate_fixtures": ["VISE_160"],
+        "candidate_setup_methods": ["PROBE_WCS"],
+        "transitions": [
+          { "transition_id": "TR50_DRILL_CORE", "method": "drill_core", "tool_candidates": ["T_DRILL_085"], "quality_target": { "roughness_ra_um": 6.3 } },
+          { "transition_id": "TR50_TAP", "method": "tap", "tool_candidates": ["T_TAP_M10"], "quality_target": { "roughness_ra_um": 6.3 } }
+        ]
+      },
+      {
+        "operation_id": "OP60_CHAMFER",
+        "name": "Снятие фасок",
+        "applicable_cde": ["CDE_CHAMFER_01"],
+        "candidate_machines": ["VMC_3AX_01", "VMC_3AX_02"],
+        "candidate_fixtures": ["VISE_160"],
+        "candidate_setup_methods": ["PROBE_WCS", "EDGE_FINDER_WCS"],
+        "transitions": [
+          { "transition_id": "TR60_CHMF", "method": "chamfer_milling", "tool_candidates": ["T_CHMF_016"], "quality_target": { "roughness_ra_um": 6.3 } }
+        ]
+      }
+    ]
+  },
+  "costs": {
+    "labor": {
+      "technologist_minute_cost_kzt": 80,
+      "operator_minute_cost_kzt": 60
+    },
+    "setup": {
+      "fixed_setup_overhead_kzt": 500
+    }
+  },
+  "quality_models": {
+    "roughness_estimation": {
+      "type": "lookup_by_method_and_feed",
+      "defaults": {
+        "face_milling_rough": { "ra_um": 6.3 },
+        "face_milling_finish": { "ra_um": 1.6 },
+        "pocket_rough": { "ra_um": 6.3 },
+        "pocket_finish": { "ra_um": 3.2 },
+        "drill": { "ra_um": 6.3 },
+        "tap": { "ra_um": 6.3 },
+        "chamfer_milling": { "ra_um": 6.3 }
+      }
+    },
+    "quality_risk": {
+      "type": "simple_weighted",
+      "weights": {
+        "setup_error_mm": 0.45,
+        "machine_positioning_mm": 0.35,
+        "aggressive_cutting_penalty": 0.20
+      }
+    }
+  }
+}

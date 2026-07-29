@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MachOpt-6L — Отчёт: {{ project_name }}</title>
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --blue: #1e4d8c;
+    --accent: #3b82f6;
+    --amber: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --card: #1e293b;
+    --border: #334155;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--navy); color: var(--text); font-family: 'Segoe UI', Arial, sans-serif; padding: 2rem; }
+  h1 { color: var(--accent); font-size: 1.8rem; margin-bottom: 0.3rem; }
+  h2 { color: var(--amber); font-size: 1.2rem; margin: 1.5rem 0 0.7rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+  h3 { color: var(--accent); font-size: 1rem; margin: 1rem 0 0.4rem; }
+  .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th { background: var(--blue); color: #fff; padding: 0.5rem 0.8rem; text-align: left; }
+  td { padding: 0.45rem 0.8rem; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+  .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; }
+  .badge-blue { background: var(--accent); color: #fff; }
+  .badge-amber { background: var(--amber); color: #000; }
+  .obj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+  .obj-card { background: var(--navy); border: 1px solid var(--border); border-radius: 6px; padding: 0.8rem 1rem; }
+  .obj-label { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .obj-value { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  .pareto-svg { display: block; margin: 1rem auto; }
+</style>
+</head>
+<body>
+
+<h1>🔧 MachOpt-6L — Отчёт по оптимизации</h1>
+<p class="subtitle">Проект: <strong>{{ project_name }}</strong>{% if strategy_label %} &nbsp;|&nbsp; Стратегия: <em>{{ strategy_label }}</em>{% endif %}</p>
+
+{% if selected %}
+<h2>Выбранное решение</h2>
+<div class="card">
+  <div class="obj-grid">
+    <div class="obj-card">
+      <div class="obj-label">Трудоёмкость</div>
+      <div class="obj-value">{{ "%.2f"|format(selected.objectives.time_total_min) }} <small>мин</small></div>
+    </div>
+    <div class="obj-card">
+      <div class="obj-label">Затраты</div>
+      <div class="obj-value">{{ "%.0f"|format(selected.objectives.cost_total_min) }} <small>KZT</small></div>
+    </div>
+    <div class="obj-card">
+      <div class="obj-label">Погрешность наладки</div>
+      <div class="obj-value">{{ "%.4f"|format(selected.objectives.setup_error_min) }} <small>мм</small></div>
+    </div>
+    <div class="obj-card">
+      <div class="obj-label">Риск качества</div>
+      <div class="obj-value">{{ "%.4f"|format(selected.objectives.quality_risk_min) }}</div>
+    </div>
+  </div>
+
+  <h3>Маршрут изделия</h3>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Операция</th><th>Станок</th><th>Оснастка</th><th>Наладка</th><th>t пз, мин</th><th>Стоим. пз, KZT</th></tr>
+    </thead>
+    <tbody>
+    {% for op in selected.operations %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ op.name }}</td>
+        <td><span class="badge badge-blue">{{ op.machine_id }}</span></td>
+        <td>{{ op.fixture_id }}</td>
+        <td>{{ op.setup_method_id }}</td>
+        <td>{{ "%.2f"|format(op.setup_time_min) }}</td>
+        <td>{{ "%.0f"|format(op.setup_cost_kzt) }}</td>
+      </tr>
+      {% for tr in op.transitions %}
+      <tr style="background:rgba(59,130,246,0.05)">
+        <td></td>
+        <td style="padding-left:2rem;color:#94a3b8">↳ {{ tr.method }}</td>
+        <td>{{ tr.tool_id }}</td>
+        <td>V={{ tr.V }} м/мин</td>
+        <td>f={{ tr.f }} мм/об</td>
+        <td>ap={{ tr.ap }} мм</td>
+        <td>t={{ "%.2f"|format(tr.basic_time_min) }} мин</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<h2>Парето-фронт ({{ pareto|length }} решений)</h2>
+<div class="card">
+  <!-- SVG scatter: cost vs time -->
+  {% if pareto|length > 0 %}
+  {% set times = pareto|map(attribute='objectives')|map(attribute='time_total_min')|list %}
+  {% set costs = pareto|map(attribute='objectives')|map(attribute='cost_total_min')|list %}
+  {% set tmin = times|min %} {% set tmax = times|max %}
+  {% set cmin = costs|min %} {% set cmax = costs|max %}
+  <svg class="pareto-svg" width="560" height="300" viewBox="0 0 560 300">
+    <!-- axes -->
+    <line x1="50" y1="260" x2="540" y2="260" stroke="#334155" stroke-width="1.5"/>
+    <line x1="50" y1="10" x2="50" y2="260" stroke="#334155" stroke-width="1.5"/>
+    <text x="295" y="293" fill="#94a3b8" font-size="12" text-anchor="middle">Трудоёмкость (мин)</text>
+    <text x="14" y="135" fill="#94a3b8" font-size="12" text-anchor="middle" transform="rotate(-90,14,135)">Затраты (KZT)</text>
+    {% for sol in pareto %}
+    {% set tx = (sol.objectives.time_total_min - tmin) / ((tmax - tmin) + 0.001) * 460 + 50 %}
+    {% set cy = 260 - (sol.objectives.cost_total_min - cmin) / ((cmax - cmin) + 0.001) * 230 %}
+    {% if sol.solution_id == selected.solution_id %}
+    <circle cx="{{ tx }}" cy="{{ cy }}" r="7" fill="#f59e0b" stroke="#fff" stroke-width="1.5">
+      <title>Выбрано: t={{ "%.1f"|format(sol.objectives.time_total_min) }} мин, c={{ "%.0f"|format(sol.objectives.cost_total_min) }} KZT</title>
+    </circle>
+    {% else %}
+    <circle cx="{{ tx }}" cy="{{ cy }}" r="5" fill="#3b82f6" opacity="0.75">
+      <title>t={{ "%.1f"|format(sol.objectives.time_total_min) }} мин, c={{ "%.0f"|format(sol.objectives.cost_total_min) }} KZT</title>
+    </circle>
+    {% endif %}
+    {% endfor %}
+  </svg>
+  <p style="color:var(--muted);font-size:0.82rem;text-align:center;">🟡 — выбранное решение&nbsp;&nbsp;🔵 — Парето-фронт</p>
+  {% endif %}
+
+  <table style="margin-top:1rem;">
+    <thead>
+      <tr><th>#</th><th>T общ., мин</th><th>Затраты, KZT</th><th>Погр. нал., мм</th><th>Риск кач.</th></tr>
+    </thead>
+    <tbody>
+    {% for sol in pareto %}
+    <tr {% if selected and sol.solution_id == selected.solution_id %}style="background:rgba(245,158,11,0.12)"{% endif %}>
+      <td>{{ loop.index }}</td>
+      <td>{{ "%.2f"|format(sol.objectives.time_total_min) }}</td>
+      <td>{{ "%.0f"|format(sol.objectives.cost_total_min) }}</td>
+      <td>{{ "%.4f"|format(sol.objectives.setup_error_min) }}</td>
+      <td>{{ "%.4f"|format(sol.objectives.quality_risk_min) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<p style="color:var(--muted);font-size:0.78rem;margin-top:2rem;">Сформировано системой MachOpt-6L &mdash; {{ project_name }}</p>
+</body>
+</html>
