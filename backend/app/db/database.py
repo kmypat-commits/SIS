@@ -1,13 +1,22 @@
-"""Database engine and session factory (SQLite for MVP)."""
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-DATABASE_URL = "sqlite:///./machopt.db"
+def _db_path():
+    url = os.getenv("DATABASE_URL")
+    if url:
+        return url
+    if os.getenv("VERCEL"):
+        return "sqlite:////tmp/machopt.db"
+    return "sqlite:///./machopt.db"
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},
-)
+DATABASE_URL = _db_path()
+
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args["check_same_thread"] = False
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

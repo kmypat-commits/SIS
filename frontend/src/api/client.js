@@ -1,5 +1,4 @@
-// API client – wrappers around all backend endpoints
-const BASE = 'http://localhost:8000';
+const BASE = import.meta.env.VITE_API_URL || '';
 
 async function req(method, path, body) {
   const opts = {

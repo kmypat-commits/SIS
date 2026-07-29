@@ -1,6 +1,4 @@
-"""
-FastAPI application entry point for MachOpt-6L.
-"""
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,17 +8,20 @@ from .db.database import SessionLocal
 from .db.seed import seed_if_empty
 from .api import projects, knowledge, optimize, report
 
-# Create tables
-Base.metadata.create_all(bind=engine)
 
-# Seed on startup
-with SessionLocal() as db:
-    seed_if_empty(db)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    with SessionLocal() as db:
+        seed_if_empty(db)
+    yield
+
 
 app = FastAPI(
     title="MachOpt-6L API",
     description="Система оптимизации технологических процессов механической обработки",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
